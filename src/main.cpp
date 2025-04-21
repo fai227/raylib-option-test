@@ -1,5 +1,8 @@
+#define RAYGUI_IMPLEMENTATION
+#include "raygui.h"
+
 #include "raylib.h"
-#include "scene.h"
+#include "Scene.h"
 #include "TitleScene.h"
 
 int main()

@@ -1,4 +1,5 @@
 #include "OptionScene.h"
+#include "raygui.h"
 
 void OptionScene::Update()
 {
@@ -18,47 +19,39 @@ void OptionScene::Update()
 
     if (selectedTab == Tab::General)
     {
-        Vector2 mousePos = GetMousePosition();
-
-        // Adjust Resolution
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        // Handle Resolution Dropdown
+        if (GuiDropdownBox(resolutionDropdownRect, resolutionOptions.c_str(), &resolutionIndex, resolutionDropdownActive))
         {
-            if (CheckCollisionPointRec(mousePos, resolutionLeftButton))
-            {
-                if (resolutionIndex > 0)
-                {
-                    resolutionIndex--;
-                    SetWindowSize(resolutions[resolutionIndex].first, resolutions[resolutionIndex].second);
-                }
-            }
-            else if (CheckCollisionPointRec(mousePos, resolutionRightButton))
-            {
-                if (resolutionIndex < resolutions.size() - 1)
-                {
-                    resolutionIndex++;
-                    SetWindowSize(resolutions[resolutionIndex].first, resolutions[resolutionIndex].second);
-                }
-            }
+            resolutionDropdownActive = !resolutionDropdownActive; // Toggle active state
+        }
+        if (!resolutionDropdownActive)
+        {
+            SetWindowSize(resolutions[resolutionIndex].first, resolutions[resolutionIndex].second);
+            RecalculateUILayout(); // Recalculate UI layout after resolution change
+        }
 
-            // Adjust Max Framerate
-            if (CheckCollisionPointRec(mousePos, framerateUpButton))
-            {
-                if (maxFramerate < 240)
-                {
-                    maxFramerate += 10;
-                    SetTargetFPS(maxFramerate);
-                }
-            }
-            else if (CheckCollisionPointRec(mousePos, framerateDownButton))
-            {
-                if (maxFramerate > 10)
-                {
-                    maxFramerate -= 10;
-                    SetTargetFPS(maxFramerate);
-                }
-            }
+        // Handle Max Framerate Spinner
+        GuiSpinner(framerateSpinnerRect, "Max FPS", &maxFramerate, 10, 240, framerateSpinnerActive);
+        if (!framerateSpinnerActive)
+        {
+            SetTargetFPS(maxFramerate);
         }
     }
+}
+
+// Recalculate UI element sizes and positions based on the current resolution
+void OptionScene::RecalculateUILayout()
+{
+    int screenWidth = GetScreenWidth();
+    int screenHeight = GetScreenHeight();
+
+    // Example: Adjust tab rectangles
+    generalTabRect = {10, 10, screenWidth / 4.0f, 50};
+    controlTabRect = {screenWidth / 4.0f + 20, 10, screenWidth / 4.0f, 50};
+
+    // Example: Adjust dropdown and spinner positions
+    resolutionDropdownRect = {100, 150, screenWidth / 3.0f, 30};
+    framerateSpinnerRect = {100, 200, screenWidth / 3.0f, 30};
 }
 
 void OptionScene::Draw()
@@ -75,22 +68,10 @@ void OptionScene::Draw()
     if (selectedTab == Tab::General)
     {
         DrawText("Resolution", 100, 150, 20, DARKGRAY);
-        DrawText(TextFormat("%dx%d", resolutions[resolutionIndex].first, resolutions[resolutionIndex].second), 300, 150, 20, DARKGRAY);
-
-        // Draw Resolution Buttons
-        DrawRectangleRec(resolutionLeftButton, GRAY);
-        DrawText("<", resolutionLeftButton.x + 10, resolutionLeftButton.y + 5, 20, WHITE);
-        DrawRectangleRec(resolutionRightButton, GRAY);
-        DrawText(">", resolutionRightButton.x + 10, resolutionRightButton.y + 5, 20, WHITE);
+        GuiDropdownBox(resolutionDropdownRect, resolutionOptions.c_str(), &resolutionIndex, resolutionDropdownActive);
 
         DrawText("Max Framerate", 100, 200, 20, DARKGRAY);
-        DrawText(TextFormat("%d FPS", maxFramerate), 300, 200, 20, DARKGRAY);
-
-        // Draw Framerate Buttons
-        DrawRectangleRec(framerateUpButton, GRAY);
-        DrawText("+", framerateUpButton.x + 10, framerateUpButton.y + 5, 20, WHITE);
-        DrawRectangleRec(framerateDownButton, GRAY);
-        DrawText("-", framerateDownButton.x + 10, framerateDownButton.y + 5, 20, WHITE);
+        GuiSpinner(framerateSpinnerRect, "Max FPS", &maxFramerate, 10, 240, framerateSpinnerActive);
     }
     else if (selectedTab == Tab::Control)
     {
